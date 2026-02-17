@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khoroch-Khata | খরচ খাতা</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Anek+Bangla:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Anek Bangla', sans-serif;
+            --font-ui: 'Plus Jakarta Sans', 'Anek Bangla', sans-serif;
+            --accent-color: 99, 102, 241; /* Default Indigo */
+        }
+        body {
+            font-family: var(--font-main);
+            background: #020617;
+            color: #f8fafc;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+        
+        h1, h2, h3, h4, .font-heading {
+            font-family: var(--font-main);
+            letter-spacing: -0.01em;
+            font-weight: 700;
+        }
+
+        p, span, button, input, select, table, .font-ui {
+            font-family: var(--font-ui);
+        }
+
+        .glass-card {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, rgb(var(--accent-color)) 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.1);
+            border-radius: 20px;
+        }
+
+        body.light {
+            background: #f8fafc;
+            color: #0f172a;
+        }
+        body.light .bg-slate-950 { background-color: #f1f5f9 !important; }
+        body.light .bg-slate-900 { background-color: #ffffff !important; }
+        body.light .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Dynamic Accent Classes */
+        .theme-bg-accent { background-color: rgb(var(--accent-color)); }
+        .theme-text-accent { color: rgb(var(--accent-color)); }
+        .theme-border-accent { border-color: rgba(var(--accent-color), 0.2); }
+        .theme-bg-accent-soft { background-color: rgba(var(--accent-color), 0.1); }
+        .theme-ring-accent { --tw-ring-color: rgba(var(--accent-color), 0.2); }
+
+        @keyframes subtle-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .animate-selected-icon {
+            animation: subtle-pulse 2s infinite ease-in-out;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "recharts": "https://esm.sh/recharts@^3.7.0",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/"
+  }
+}
+</script>
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
