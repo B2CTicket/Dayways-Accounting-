@@ -36,7 +36,6 @@ const App: React.FC = () => {
       const saved = localStorage.getItem('khoroch_khata_data');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // If data exists but profiles is empty for some reason, we'll still use initial
         return { ...initialState, ...parsed };
       }
     } catch (e) {
@@ -50,6 +49,7 @@ const App: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [quickPaymentCategory, setQuickPaymentCategory] = useState<string | undefined>(undefined);
   const [dateRange, setDateRange] = useState<DateRange>({ type: 'this_month' });
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('khoroch_khata_data', JSON.stringify(state));
@@ -156,24 +156,36 @@ const App: React.FC = () => {
     }
   };
 
-  const handleOnboardingComplete = (name: string, avatar: string, image: string | undefined, currencySymbol: string) => {
-    const newProfile: Profile = {
-      id: generateId(),
-      name,
-      avatar,
-      image,
-      color: '99, 102, 241',
-      budgets: {}
-    };
-    setState(prev => ({
-      ...prev,
-      profiles: [newProfile],
-      activeProfileId: newProfile.id,
-      currency: { ...prev.currency, symbol: currencySymbol }
-    }));
+  const handleOnboardingComplete = (name: string, avatar: string, image: string | undefined, currencySymbol: string, email: string) => {
+    // Check if profile with this email already exists
+    const existingProfile = state.profiles.find(p => p.email === email);
+    
+    if (existingProfile) {
+      setState(prev => ({
+        ...prev,
+        activeProfileId: existingProfile.id
+      }));
+    } else {
+      const newProfile: Profile = {
+        id: generateId(),
+        name,
+        avatar,
+        image,
+        email, // Store email in profile for simulation
+        color: '99, 102, 241',
+        budgets: {}
+      };
+      setState(prev => ({
+        ...prev,
+        profiles: [...prev.profiles, newProfile],
+        activeProfileId: newProfile.id,
+        currency: { ...prev.currency, symbol: currencySymbol }
+      }));
+    }
+    setIsLoggedIn(true);
   };
 
-  if (state.profiles.length === 0) {
+  if (!isLoggedIn) {
     return <Onboarding onComplete={handleOnboardingComplete} />;
   }
 
