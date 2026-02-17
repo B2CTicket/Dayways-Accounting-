@@ -11,13 +11,13 @@ import CategoryManager from './components/CategoryManager';
 import DateRangeSelector from './components/DateRangeSelector';
 import ReminderManager from './components/ReminderManager';
 import SettingsManager from './components/SettingsManager';
+import Onboarding from './components/Onboarding';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
-    const defaultProfile = { id: 'p1', name: 'আমার হিসাব', avatar: '😊', color: 'indigo', budgets: {} };
     const initialState: AppState = {
-      profiles: [defaultProfile],
-      activeProfileId: 'p1',
+      profiles: [],
+      activeProfileId: '',
       transactions: [],
       reminders: [],
       notificationSettings: {
@@ -36,6 +36,7 @@ const App: React.FC = () => {
       const saved = localStorage.getItem('khoroch_khata_data');
       if (saved) {
         const parsed = JSON.parse(saved);
+        // If data exists but profiles is empty for some reason, we'll still use initial
         return { ...initialState, ...parsed };
       }
     } catch (e) {
@@ -62,6 +63,7 @@ const App: React.FC = () => {
   );
 
   const filteredTransactions = useMemo(() => {
+    if (!activeProfile) return [];
     let list = state.transactions.filter(t => t.profileId === state.activeProfileId);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -88,7 +90,7 @@ const App: React.FC = () => {
         default: return true;
       }
     });
-  }, [state.transactions, state.activeProfileId, dateRange]);
+  }, [state.transactions, state.activeProfileId, dateRange, activeProfile]);
 
   const generateId = () => {
     return typeof crypto.randomUUID === 'function' 
@@ -110,7 +112,6 @@ const App: React.FC = () => {
     setQuickPaymentCategory(undefined);
   };
 
-  // Added handleQuickPayment function to handle quick category selections from dashboard
   const handleQuickPayment = (category: string) => {
     setQuickPaymentCategory(category);
     setIsAddModalOpen(true);
@@ -154,6 +155,27 @@ const App: React.FC = () => {
       reader.readAsText(file);
     }
   };
+
+  const handleOnboardingComplete = (name: string, avatar: string, image: string | undefined, currencySymbol: string) => {
+    const newProfile: Profile = {
+      id: generateId(),
+      name,
+      avatar,
+      image,
+      color: '99, 102, 241',
+      budgets: {}
+    };
+    setState(prev => ({
+      ...prev,
+      profiles: [newProfile],
+      activeProfileId: newProfile.id,
+      currency: { ...prev.currency, symbol: currencySymbol }
+    }));
+  };
+
+  if (state.profiles.length === 0) {
+    return <Onboarding onComplete={handleOnboardingComplete} />;
+  }
 
   return (
     <div className={`flex flex-col md:flex-row min-h-screen ${state.theme === 'dark' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'}`}>
