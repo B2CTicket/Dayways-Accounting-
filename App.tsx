@@ -98,6 +98,21 @@ const App: React.FC = () => {
       : Math.random().toString(36).substring(2, 15);
   };
 
+  const handleSyncCodeImport = (code: string) => {
+    try {
+      const decoded = decodeURIComponent(escape(atob(code)));
+      const parsed = JSON.parse(decoded);
+      if (parsed.profiles && Array.isArray(parsed.profiles)) {
+        setState(parsed);
+        alert('সফলভাবে আপনার সব একাউন্টের ডাটা সিঙ্ক হয়েছে!');
+      } else {
+        throw new Error("Invalid sync code");
+      }
+    } catch (err) {
+      alert('ভুল সিঙ্ক কোড! দয়া করে সঠিক কোডটি কপি করে আনুন।');
+    }
+  };
+
   const saveTransaction = (data: any) => {
     if (editingTransaction) {
       setState(prev => ({
@@ -193,7 +208,7 @@ const App: React.FC = () => {
   };
 
   if (!isLoggedIn) {
-    return <Onboarding onComplete={handleOnboardingComplete} onResetPassword={handleResetPassword} existingProfiles={state.profiles} />;
+    return <Onboarding onComplete={handleOnboardingComplete} onResetPassword={handleResetPassword} existingProfiles={state.profiles} onImportSyncCode={handleSyncCodeImport} />;
   }
 
   return (
@@ -224,7 +239,7 @@ const App: React.FC = () => {
           {activeTab === 'insights' && <AIInsights transactions={filteredTransactions} currency={state.currency} />}
           {activeTab === 'reminders' && <ReminderManager reminders={state.reminders.filter(r => r.profileId === state.activeProfileId)} notificationSettings={state.notificationSettings} onAdd={(t, d, rt) => { const nr = { id: generateId(), profileId: state.activeProfileId, task: t, date: d, remindTime: rt, isCompleted: false }; setState(p => ({ ...p, reminders: [...p.reminders, nr] })); }} onDelete={id => setState(p => ({ ...p, reminders: p.reminders.filter(r => r.id !== id) }))} onToggle={id => setState(p => ({ ...p, reminders: p.reminders.map(r => r.id === id ? { ...r, isCompleted: !r.isCompleted } : r) }))} />}
           {activeTab === 'categories' && <CategoryManager categories={state.categories} onUpdate={(ty, cs) => setState(p => ({ ...p, categories: { ...p.categories, [ty]: cs } }))} activeProfile={activeProfile} onUpdateBudget={(c, a) => setState(p => ({ ...p, profiles: p.profiles.map(pr => pr.id === state.activeProfileId ? { ...pr, budgets: { ...pr.budgets, [c]: a } } : pr) }))} currency={state.currency} />}
-          {activeTab === 'settings' && <SettingsManager currency={state.currency} accentColor={state.accentColor} notificationSettings={state.notificationSettings} onUpdateNotifications={n => setState(p => ({ ...p, notificationSettings: n }))} onUpdateAccent={c => setState(p => ({ ...p, accentColor: c }))} onUpdateCurrency={c => setState(p => ({ ...p, currency: c }))} onBackup={handleBackup} onRestore={handleRestore} />}
+          {activeTab === 'settings' && <SettingsManager currency={state.currency} accentColor={state.accentColor} notificationSettings={state.notificationSettings} onUpdateNotifications={n => setState(p => ({ ...p, notificationSettings: n }))} onUpdateAccent={c => setState(p => ({ ...p, accentColor: c }))} onUpdateCurrency={c => setState(p => ({ ...p, currency: c }))} onBackup={handleBackup} onRestore={handleRestore} onImportSyncCode={handleSyncCodeImport} fullState={state} />}
         </div>
       </main>
       <button onClick={() => setIsAddModalOpen(true)} className="fixed bottom-24 right-6 md:bottom-10 md:right-10 w-16 h-16 theme-bg-accent rounded-[2rem] shadow-2xl flex items-center justify-center z-40 group ring-4 theme-ring-accent transition-all"><i className="fa-solid fa-plus text-2xl text-white group-hover:rotate-90 transition-transform"></i></button>

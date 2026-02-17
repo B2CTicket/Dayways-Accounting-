@@ -61,6 +61,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, activeProfil
       </nav>
 
       <div className="mt-auto pt-6 border-t border-slate-800">
+        <div className="p-5 rounded-3xl bg-slate-950/60 border border-white/5 flex items-center gap-4 mb-4">
+           <div className="w-10 h-10 rounded-xl bg-indigo-600/20 flex items-center justify-center text-indigo-400">
+              <i className="fa-solid fa-cloud-check"></i>
+           </div>
+           <div>
+              <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest">সিঙ্ক স্ট্যাটাস</p>
+              <p className="text-[10px] text-indigo-400 font-bold">ডাটা সুরক্ষিত আছে</p>
+           </div>
+        </div>
         <div className="p-4 rounded-3xl bg-indigo-500/[0.03] border border-white/[0.03]">
           <p className="text-[10px] theme-text-accent font-bold uppercase tracking-widest mb-1.5">সিস্টেম তথ্য</p>
           <p className="text-[11px] text-slate-500 leading-relaxed italic">আপনার ডাটা আপনার হাতে। নিয়মিত ব্যাকআপ নিন।</p>

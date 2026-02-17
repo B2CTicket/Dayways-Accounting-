@@ -6,9 +6,10 @@ interface OnboardingProps {
   onComplete: (name: string, avatar: string, image: string | undefined, currency: string, email: string, password?: string) => void;
   onResetPassword: (email: string, newPassword: string) => void;
   existingProfiles: Profile[];
+  onImportSyncCode?: (code: string) => void;
 }
 
-const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onResetPassword, existingProfiles }) => {
+const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onResetPassword, existingProfiles, onImportSyncCode }) => {
   const [mode, setMode] = useState<'signup' | 'login' | 'recovery'>('login');
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
@@ -30,6 +31,13 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onResetPassword, ex
     { s: '$', l: 'Dollar (USD)' },
     { s: '₹', l: 'Rupee (INR)' }
   ];
+
+  const handleSyncImport = () => {
+    const code = prompt("আপনার অন্য ডিভাইসের 'সিঙ্ক কোড'টি এখানে পেস্ট করুন:");
+    if (code && onImportSyncCode) {
+      onImportSyncCode(code);
+    }
+  };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -186,7 +194,14 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onResetPassword, ex
                     </button>
                   </div>
                   {mode === 'login' && (
-                    <div className="text-right px-2">
+                    <div className="flex justify-between items-center px-2">
+                      <button 
+                        type="button"
+                        onClick={handleSyncImport}
+                        className="text-[10px] font-bold text-emerald-400 hover:underline"
+                      >
+                        অন্য ফোন থেকে ডাটা আনুন
+                      </button>
                       <button 
                         type="button"
                         onClick={() => { setMode('recovery'); setError(''); }}
