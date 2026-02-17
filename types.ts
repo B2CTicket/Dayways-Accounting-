@@ -26,7 +26,8 @@ export interface Profile {
   id: string;
   name: string;
   avatar: string;
-  email?: string; // Added email field
+  email?: string; 
+  password?: string; // Added password field
   image?: string; // Base64 image string
   color: string;
   budgets?: Record<string, number>; // Category name -> budget amount

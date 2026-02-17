@@ -156,8 +156,7 @@ const App: React.FC = () => {
     }
   };
 
-  const handleOnboardingComplete = (name: string, avatar: string, image: string | undefined, currencySymbol: string, email: string) => {
-    // Check if profile with this email already exists
+  const handleOnboardingComplete = (name: string, avatar: string, image: string | undefined, currencySymbol: string, email: string, password?: string) => {
     const existingProfile = state.profiles.find(p => p.email === email);
     
     if (existingProfile) {
@@ -171,7 +170,8 @@ const App: React.FC = () => {
         name,
         avatar,
         image,
-        email, // Store email in profile for simulation
+        email, 
+        password,
         color: '99, 102, 241',
         budgets: {}
       };
@@ -185,8 +185,15 @@ const App: React.FC = () => {
     setIsLoggedIn(true);
   };
 
+  const handleResetPassword = (email: string, newPassword: string) => {
+    setState(prev => ({
+      ...prev,
+      profiles: prev.profiles.map(p => p.email === email ? { ...p, password: newPassword } : p)
+    }));
+  };
+
   if (!isLoggedIn) {
-    return <Onboarding onComplete={handleOnboardingComplete} />;
+    return <Onboarding onComplete={handleOnboardingComplete} onResetPassword={handleResetPassword} existingProfiles={state.profiles} />;
   }
 
   return (
