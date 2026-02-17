@@ -14,25 +14,8 @@ import SettingsManager from './components/SettingsManager';
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
-    const saved = localStorage.getItem('khoroch_khata_data');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (!parsed.reminders) parsed.reminders = [];
-      if (!parsed.theme) parsed.theme = 'dark';
-      if (!parsed.accentColor) parsed.accentColor = '99, 102, 241';
-      if (!parsed.currency) parsed.currency = { symbol: '৳', position: 'prefix' };
-      if (!parsed.notificationSettings) {
-        parsed.notificationSettings = {
-          enableDailySummary: true,
-          enableBudgetAlerts: true,
-          enableReminders: true,
-          sounds: { reminder: undefined, budget: undefined, system: undefined }
-        };
-      }
-      return parsed;
-    }
     const defaultProfile = { id: 'p1', name: 'আমার হিসাব', avatar: '😊', color: 'indigo', budgets: {} };
-    return {
+    const initialState: AppState = {
       profiles: [defaultProfile],
       activeProfileId: 'p1',
       transactions: [],
@@ -48,6 +31,17 @@ const App: React.FC = () => {
       accentColor: '99, 102, 241',
       currency: { symbol: '৳', position: 'prefix' }
     };
+
+    try {
+      const saved = localStorage.getItem('khoroch_khata_data');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return { ...initialState, ...parsed };
+      }
+    } catch (e) {
+      console.error("Failed to parse local storage data:", e);
+    }
+    return initialState;
   });
 
   const [activeTab, setActiveTab] = useState<'dashboard' | 'transactions' | 'insights' | 'categories' | 'reminders' | 'settings'>('dashboard');
@@ -96,6 +90,12 @@ const App: React.FC = () => {
     });
   }, [state.transactions, state.activeProfileId, dateRange]);
 
+  const generateId = () => {
+    return typeof crypto.randomUUID === 'function' 
+      ? crypto.randomUUID() 
+      : Math.random().toString(36).substring(2, 15);
+  };
+
   const saveTransaction = (data: any) => {
     if (editingTransaction) {
       setState(prev => ({
@@ -103,24 +103,35 @@ const App: React.FC = () => {
         transactions: prev.transactions.map(t => t.id === editingTransaction.id ? { ...data, id: t.id, profileId: t.profileId } : t)
       }));
     } else {
-      const newT = { ...data, id: crypto.randomUUID(), profileId: state.activeProfileId };
+      const newT = { ...data, id: generateId(), profileId: state.activeProfileId };
       setState(prev => ({ ...prev, transactions: [newT, ...prev.transactions] }));
     }
     setEditingTransaction(null);
     setQuickPaymentCategory(undefined);
   };
 
+  // Added handleQuickPayment function to handle quick category selections from dashboard
   const handleQuickPayment = (category: string) => {
     setQuickPaymentCategory(category);
     setIsAddModalOpen(true);
   };
 
   const handleBackup = () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `backup-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
+    try {
+      const data = JSON.stringify(state, null, 2);
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `khoroch-khata-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      alert('সফলভাবে ব্যাকআপ ফাইলটি ডাউনলোড হয়েছে!');
+    } catch (err) {
+      alert('ব্যাকআপ নিতে সমস্যা হয়েছে। আবার চেষ্টা করুন।');
+    }
   };
 
   const handleRestore = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -130,8 +141,15 @@ const App: React.FC = () => {
       reader.onload = (ev) => {
         try {
           const imported = JSON.parse(ev.target?.result as string);
-          if (imported.profiles) { setState(imported); alert('রিস্টোর সফল!'); }
-        } catch (err) { alert('ভুল ফাইল!'); }
+          if (imported.profiles && Array.isArray(imported.profiles)) {
+            setState(imported);
+            alert('রিস্টোর সফল হয়েছে!');
+          } else {
+            throw new Error("Invalid format");
+          }
+        } catch (err) {
+          alert('ভুল ফাইল! সঠিক ব্যাকআপ ফাইল নির্বাচন করুন।');
+        }
       };
       reader.readAsText(file);
     }
@@ -156,14 +174,14 @@ const App: React.FC = () => {
               <DateRangeSelector currentRange={dateRange} onRangeChange={setDateRange} />
             )}
             <button onClick={() => setState(p => ({ ...p, theme: p.theme === 'dark' ? 'light' : 'dark' }))} className="w-11 h-11 flex items-center justify-center rounded-2xl bg-slate-800 border border-white/5 theme-text-accent"><i className={`fa-solid ${state.theme === 'dark' ? 'fa-sun' : 'fa-moon'}`}></i></button>
-            <ProfileSelector profiles={state.profiles} activeId={state.activeProfileId} onSwitch={id => setState(p => ({ ...p, activeProfileId: id }))} onAdd={(n, a, c, i) => { const np = { id: crypto.randomUUID(), name: n, avatar: a, color: c, budgets: {}, image: i }; setState(p => ({ ...p, profiles: [...p.profiles, np], activeProfileId: np.id })); }} onUpdate={(id, n, a, c, i) => setState(p => ({ ...p, profiles: p.profiles.map(pr => pr.id === id ? { ...pr, name: n, avatar: a, color: c, image: i } : pr) }))} onDelete={id => setState(p => { const filtered = p.profiles.filter(pr => pr.id !== id); return { ...p, profiles: filtered, activeProfileId: filtered[0]?.id || '' }; })} />
+            <ProfileSelector profiles={state.profiles} activeId={state.activeProfileId} onSwitch={id => setState(p => ({ ...p, activeProfileId: id }))} onAdd={(n, a, c, i) => { const np = { id: generateId(), name: n, avatar: a, color: c, budgets: {}, image: i }; setState(p => ({ ...p, profiles: [...p.profiles, np], activeProfileId: np.id })); }} onUpdate={(id, n, a, c, i) => setState(p => ({ ...p, profiles: p.profiles.map(pr => pr.id === id ? { ...pr, name: n, avatar: a, color: c, image: i } : pr) }))} onDelete={id => setState(p => { const filtered = p.profiles.filter(pr => pr.id !== id); return { ...p, profiles: filtered, activeProfileId: filtered[0]?.id || '' }; })} />
           </div>
         </header>
         <div className="p-5 md:p-10 max-w-6xl mx-auto">
           {activeTab === 'dashboard' && <Dashboard transactions={filteredTransactions} profile={activeProfile} categories={state.categories} onEdit={setEditingTransaction} onQuickPayment={handleQuickPayment} currency={state.currency} />}
           {activeTab === 'transactions' && <TransactionList transactions={filteredTransactions} onDelete={id => setState(p => ({ ...p, transactions: p.transactions.filter(t => t.id !== id) }))} onEdit={t => { setEditingTransaction(t); setIsAddModalOpen(true); }} categories={state.categories} currency={state.currency} />}
           {activeTab === 'insights' && <AIInsights transactions={filteredTransactions} currency={state.currency} />}
-          {activeTab === 'reminders' && <ReminderManager reminders={state.reminders.filter(r => r.profileId === state.activeProfileId)} notificationSettings={state.notificationSettings} onAdd={(t, d, rt) => { const nr = { id: crypto.randomUUID(), profileId: state.activeProfileId, task: t, date: d, remindTime: rt, isCompleted: false }; setState(p => ({ ...p, reminders: [...p.reminders, nr] })); }} onDelete={id => setState(p => ({ ...p, reminders: p.reminders.filter(r => r.id !== id) }))} onToggle={id => setState(p => ({ ...p, reminders: p.reminders.map(r => r.id === id ? { ...r, isCompleted: !r.isCompleted } : r) }))} />}
+          {activeTab === 'reminders' && <ReminderManager reminders={state.reminders.filter(r => r.profileId === state.activeProfileId)} notificationSettings={state.notificationSettings} onAdd={(t, d, rt) => { const nr = { id: generateId(), profileId: state.activeProfileId, task: t, date: d, remindTime: rt, isCompleted: false }; setState(p => ({ ...p, reminders: [...p.reminders, nr] })); }} onDelete={id => setState(p => ({ ...p, reminders: p.reminders.filter(r => r.id !== id) }))} onToggle={id => setState(p => ({ ...p, reminders: p.reminders.map(r => r.id === id ? { ...r, isCompleted: !r.isCompleted } : r) }))} />}
           {activeTab === 'categories' && <CategoryManager categories={state.categories} onUpdate={(ty, cs) => setState(p => ({ ...p, categories: { ...p.categories, [ty]: cs } }))} activeProfile={activeProfile} onUpdateBudget={(c, a) => setState(p => ({ ...p, profiles: p.profiles.map(pr => pr.id === state.activeProfileId ? { ...pr, budgets: { ...pr.budgets, [c]: a } } : pr) }))} currency={state.currency} />}
           {activeTab === 'settings' && <SettingsManager currency={state.currency} accentColor={state.accentColor} notificationSettings={state.notificationSettings} onUpdateNotifications={n => setState(p => ({ ...p, notificationSettings: n }))} onUpdateAccent={c => setState(p => ({ ...p, accentColor: c }))} onUpdateCurrency={c => setState(p => ({ ...p, currency: c }))} onBackup={handleBackup} onRestore={handleRestore} />}
         </div>
@@ -180,12 +198,6 @@ const App: React.FC = () => {
           <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`relative flex flex-col items-center py-2 transition-all ${activeTab === tab.id ? 'theme-text-accent scale-110' : 'text-slate-500'}`}>
             <i className={`fa-solid ${tab.icon} text-lg mb-1.5 ${tab.id === 'insights' ? 'text-purple-400' : ''}`}></i>
             <span className="text-[9px] font-bold">{tab.label}</span>
-            {tab.id === 'insights' && (
-               <span className="absolute top-1 right-2 flex h-1.5 w-1.5">
-                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-purple-500"></span>
-               </span>
-            )}
           </button>
         ))}
       </nav>
